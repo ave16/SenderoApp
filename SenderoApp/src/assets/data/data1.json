@@ -1,0 +1,12 @@
+{
+    "properties": [
+        {
+            "city": "ALCOY",            
+            "coordinates": [38.707893,-0.486581]
+        },
+        {
+            "city": "AGRES",           
+            "coordinates":[ 38.777138,-0.516274]
+        }        
+    ]
+}
