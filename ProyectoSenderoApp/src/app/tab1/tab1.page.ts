@@ -2,6 +2,22 @@ import { Component} from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.locatecontrol';
 
+//Posición y Dirección para el marker (datos en carpeta angular.json)
+const iconRetinaUrl = './assets/marker-icon-2x.png';
+const iconUrl = './assets/marker-icon.png';
+const shadowUrl = './assets/marker-shadow.png';
+const iconDefault = L.icon({
+iconRetinaUrl,
+iconUrl,
+shadowUrl,
+iconSize: [26, 41],
+iconAnchor: [13, 41],
+popupAnchor: [1, -34],
+tooltipAnchor: [16, -28],
+shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = iconDefault;
+
 @Component({
   selector: 'app-tab1',
   templateUrl: 'tab1.page.html',
@@ -9,7 +25,7 @@ import 'leaflet.locatecontrol';
 })
 export class Tab1Page{
   map: L.Map;
-  propertyList = [];
+  propertyList = [];  
 
   ionViewDidEnter() {
     this.leafletMap();
@@ -47,23 +63,48 @@ export class Tab1Page{
     //localizacion GPS
     L.control.locate().addTo(this.map);
 
-    fetch('./assets/data/data1.json')
-      .then(res => res.json())
-      .then(data => {        
-        this.propertyList = data.properties,data.coordinates;
+    //ABRIR geojson (linea)
+    fetch('./assets/data/ruta_l.json')
+      .then(response => {     
+     return response.json();
+  })
+      .then(data => {
+        var Ruta =L.geoJSON(data, {
+          style: function (feature) {
+            return{
+            color: " #ff0000 ",
+            weight: 5,
+            opacity:1
+          };
+        },
+        onEachFeature: function (feature, layer) {
+          layer.bindTooltip ("Nombre: "+feature.properties.N+"<br>Longitud: "+feature.properties.L, {permanent:true, opacity:0.6});
+        }
+        }).addTo(this.map)
+        this.map.fitBounds(Ruta.getBounds());
+        //this.map.flyToBounds(Ruta.getBounds(), {'duration':3});
+      });
 
-        this.Puntos();
-      }).catch(err => console.error(err));
+      //ABRIR geojson (puntos)
+    fetch('./assets/data/ruta_p.json')
+    .then(response => {     
+    return response.json();
+  })
+  .then(data => {
+    L.geoJSON(data, {
+      onEachFeature: function (feature, layer) {
+        layer.bindTooltip ("<b>"+feature.properties.NAME, {permanent:true});
+      },
+      pointToLayer: function(feature, latlng) {
+    
+        return L.marker(latlng, { });     
+           }
+         }).addTo(this.map);	
+       }); 
 
+  //.catch(error => console.error(error));
   }
-
-  Puntos() {
-    for (const property of this.propertyList) {
-      L.marker(property.coordinates).addTo(this.map)
-        .bindTooltip("<b>"+property.city,{permanent:true});
-    }         
-  } 
-
+  
   /** Remove map when we have multiple map object */
   ionViewWillLeave() {
     this.map.remove();
